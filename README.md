@@ -36,6 +36,13 @@ struct MyInfo: Codable {
   }
 }
 
+let me = MyInfo(
+  height: 172.2,
+  name: "Scott",
+  friends: ["tom", "john", "mike"],
+  family: .init(
+    names: ["Father", "Mother", "Brother"]))
+
 do {
   let data = try URLEncodedFormEncoder().encode(me)
   print(String(data: data, encoding: .utf8) ?? "nil")
