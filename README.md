@@ -22,7 +22,31 @@ dependencies: [
 
 ## ✍🏻 Usage
 
-Regarding the usage, we plan to update it later.
+It supports Codable provided by the Swift Foundation.
+
+```swift
+struct MyInfo: Codable {
+  let height: Double
+  let name: String
+  let friends: [String]
+  let family: Family
+
+  struct Family: Codable {
+    let names: [String]
+  }
+}
+
+do {
+  let data = try URLEncodedFormEncoder().encode(me)
+  print(String(data: data, encoding: .utf8) ?? "nil")
+
+  let origin = "name=Scott&height=172.2&friends[]=tom&friends[]=john&friends[]=mike&family[names][]=Father&family[names][]=Mother&family[names][]=Brother"
+  let obj = try URLEncodedFormDecoder().decode(MyInfo.self, from: origin)
+  print(obj)
+} catch {
+  print(error)
+}
+```
 
 ## License
 
