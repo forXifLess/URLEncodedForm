@@ -9,3 +9,9 @@ final class URLEncodedFormTests: XCTestCase {
         XCTAssertEqual(URLEncodedForm().text, "Hello, World!")
     }
 }
+
+extension URLEncodedForm {
+  fileprivate var text: String {
+    "Hello, World!"
+  }
+}

@@ -1,6 +1,5 @@
-public struct URLEncodedForm {
-    public private(set) var text = "Hello, World!"
+import Foundation
 
-    public init() {
-    }
+public struct URLEncodedForm {
+  public init() {}
 }
