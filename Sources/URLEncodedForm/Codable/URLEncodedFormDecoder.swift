@@ -202,15 +202,18 @@ private final class _URLEncodedFormKeyedDecoder<K>: KeyedDecodingContainerProtoc
 
   /// See `KeyedDecodingContainerProtocol.`
   func decode<T>(_: T.Type, forKey key: K) throws -> T where T: Decodable {
-    if let convertible = T.self as? URLEncodedFormDataConvertible.Type {
-      guard let data = context.data.get(at: codingPath + [key]) else {
-        throw DecodingError.valueNotFound(T.self, at: codingPath + [key])
-      }
-      return try convertible.convertFromURLEncodedFormData(data) as! T
-    } else {
+    guard let convertible = T.self as? URLEncodedFormDataConvertible.Type else {
       let decoder = _URLEncodedFormDecoder(context: context, codingPath: codingPath + [key])
       return try T(from: decoder)
     }
+
+    var data: URLEncodedFormData? {
+      guard let _ = T.self as? String.Type else { return context.data.get(at: codingPath + [key]) }
+      return context.data.get(at: codingPath + [key]) ?? ""
+    }
+    guard let data else { throw DecodingError.valueNotFound(T.self, at: codingPath + [key]) }
+
+    return try convertible.convertFromURLEncodedFormData(data) as! T
   }
 
   /// See `KeyedDecodingContainerProtocol.`
