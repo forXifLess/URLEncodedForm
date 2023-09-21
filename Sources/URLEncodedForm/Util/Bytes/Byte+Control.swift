@@ -2,11 +2,6 @@ import Foundation
 
 /// Adds control character conveniences to `Byte`.
 extension Byte {
-  /// Returns whether or not the given byte can be considered UTF8 whitespace
-  public var isWhitespace: Bool {
-    return self == .space || self == .newLine || self == .carriageReturn || self == .horizontalTab
-  }
-
   /// '\t'
   public static let horizontalTab: Byte = 0x9
 
@@ -114,12 +109,18 @@ extension Byte {
 
   /// |
   public static let pipe: Byte = 0x7C
+
+  /// Returns whether or not the given byte can be considered UTF8 whitespace
+  public var isWhitespace: Bool {
+    self == .space || self == .newLine || self == .carriageReturn || self == .horizontalTab
+  }
+
 }
 
 extension Byte {
   /// Defines the `crlf` used to denote line breaks in HTTP and many other formatters
   public static let crlf: Bytes = [
     .carriageReturn,
-    .newLine
+    .newLine,
   ]
 }

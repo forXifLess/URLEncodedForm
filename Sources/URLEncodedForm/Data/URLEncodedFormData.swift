@@ -1,5 +1,7 @@
 import Foundation
 
+// MARK: - URLEncodedFormData
+
 /// Represents application/x-www-form-urlencoded encoded data.
 enum URLEncodedFormData: Equatable {
 
@@ -11,15 +13,9 @@ enum URLEncodedFormData: Equatable {
 
 }
 
+// MARK: NestedData
+
 extension URLEncodedFormData: NestedData {
-  static func dictionary(_ value: [String : URLEncodedFormData]) -> URLEncodedFormData {
-    return .dict(value)
-  }
-
-  static func array(_ value: [URLEncodedFormData]) -> URLEncodedFormData {
-    return .arr(value)
-  }
-
   var string: String? {
     switch self {
     case .str(let item): return item
@@ -41,13 +37,24 @@ extension URLEncodedFormData: NestedData {
     }
   }
 
-  var dictionary: [String : URLEncodedFormData]? {
+  var dictionary: [String: URLEncodedFormData]? {
     switch self {
     case .dict(let map): return map
     default: return .none
     }
   }
+
+  static func dictionary(_ value: [String: URLEncodedFormData]) -> URLEncodedFormData {
+    .dict(value)
+  }
+
+  static func array(_ value: [URLEncodedFormData]) -> URLEncodedFormData {
+    .arr(value)
+  }
+
 }
+
+// MARK: ExpressibleByArrayLiteral, ExpressibleByStringLiteral, ExpressibleByDictionaryLiteral
 
 extension URLEncodedFormData: ExpressibleByArrayLiteral, ExpressibleByStringLiteral, ExpressibleByDictionaryLiteral {
   init(arrayLiteral elements: URLEncodedFormData...) {
@@ -62,7 +69,6 @@ extension URLEncodedFormData: ExpressibleByArrayLiteral, ExpressibleByStringLite
     self = .dict(
       elements.reduce([:]) { curr, next in
         curr.merging([next.0: next.1]) { $1 }
-      }
-    )
+      })
   }
 }

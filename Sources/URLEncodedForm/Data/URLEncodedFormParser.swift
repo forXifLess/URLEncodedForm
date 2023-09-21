@@ -1,17 +1,28 @@
 import Foundation
 
+// MARK: - URLEncodedFormParser
+
 /// Converts `Data` to `[String: URLEncodedFormData]`.
 final class URLEncodedFormParser {
-  /// Default form url encoded parser.
-  static let `default` = URLEncodedFormParser()
+
+  // MARK: Lifecycle
 
   /// Create a new form-urlencoded data parser.
-  init() {}
+  init() { }
+
+  // MARK: Internal
+
+  /// Default form url encoded parser.
+  static let `default` = URLEncodedFormParser()
 
   /// Parses the data.
   /// If empty values is false, `foo=` will resolve as `foo: true`
   /// instead of `foo: ""`
-  func parse(percentEncoded: String, omitEmptyValues: Bool = false, omitFlags: Bool = false) throws -> [String: URLEncodedFormData] {
+  func parse(
+    percentEncoded: String,
+    omitEmptyValues: Bool = false,
+    omitFlags: Bool = false) throws -> [String: URLEncodedFormData]
+  {
     let partiallyDecoded = percentEncoded.replacingOccurrences(of: "+", with: " ")
     return try parse(data: partiallyDecoded, omitEmptyValues: omitEmptyValues, omitFlags: omitFlags)
   }
@@ -19,7 +30,11 @@ final class URLEncodedFormParser {
   /// Parses the data.
   /// If empty values is false, `foo=` will resolve as `foo: true`
   /// instead of `foo: ""`
-  func parse(data: LosslessDataConvertible, omitEmptyValues: Bool = false, omitFlags: Bool = false) throws -> [String: URLEncodedFormData] {
+  func parse(
+    data: LosslessDataConvertible,
+    omitEmptyValues: Bool = false,
+    omitFlags: Bool = false) throws -> [String: URLEncodedFormData]
+  {
     var encoded: [String: URLEncodedFormData] = [:]
     let data = data.convertToData()
 
@@ -33,22 +48,20 @@ final class URLEncodedFormParser {
       let token = pair.split(
         separator: .equals,
         maxSplits: 1, // max 1, `foo=a=b` should be `"foo": "a=b"`
-        omittingEmptySubsequences: false
-      )
+        omittingEmptySubsequences: false)
 
       guard let decodedKey = try token.first?.utf8DecodedString().removingPercentEncoding else {
         throw URLEncodedFormError(
           identifier: "percentDecoding",
-          reason: "Could not percent decode string key: \(token[0])"
-        )
+          reason: "Could not percent decode string key: \(token[0])")
       }
       let decodedValue = try token.last?.utf8DecodedString().removingPercentEncoding
 
       if token.count == 2 {
-        if omitEmptyValues && token[1].count == 0 {
+        if omitEmptyValues, token[1].count == 0 {
           continue
         }
-        guard let decodedValue = decodedValue else {
+        guard let decodedValue else {
           throw URLEncodedFormError(identifier: "percentDecoding", reason: "Could not percent decode string value: \(token[1])")
         }
         key = try parseKey(data: decodedKey)
@@ -62,15 +75,14 @@ final class URLEncodedFormParser {
       } else {
         throw URLEncodedFormError(
           identifier: "malformedData",
-          reason: "Malformed form-urlencoded data encountered"
-        )
+          reason: "Malformed form-urlencoded data encountered")
       }
 
       let resolved: URLEncodedFormData
 
       if !key.subKeys.isEmpty {
         var current = encoded[key.string] ?? .dictionary([:])
-        self.set(&current, to: data, at: key.subKeys)
+        set(&current, to: data, at: key.subKeys)
         resolved = current
       } else {
         resolved = data
@@ -82,6 +94,8 @@ final class URLEncodedFormParser {
     return encoded
   }
 
+  // MARK: Private
+
   /// Parses a `URLEncodedFormEncodedKey` from `Data`.
   private func parseKey(data dataConvertible: LosslessDataConvertible) throws -> URLEncodedFormEncodedKey {
     let data = dataConvertible.convertToData()
@@ -89,7 +103,7 @@ final class URLEncodedFormParser {
     let subKeys: [URLEncodedFormEncodedSubKey]
 
     // check if the key has `key[]` or `key[5]`
-    if data.contains(.rightSquareBracket) && data.contains(.leftSquareBracket) {
+    if data.contains(.rightSquareBracket), data.contains(.leftSquareBracket) {
       // split on the `[`
       // a[b][c][d][hello] => a, b], c], d], hello]
       let slices = data.split(separator: .leftSquareBracket)
@@ -114,8 +128,7 @@ final class URLEncodedFormParser {
 
     return try URLEncodedFormEncodedKey(
       string: stringData.utf8DecodedString(),
-      subKeys: subKeys
-    )
+      subKeys: subKeys)
   }
 
   /// Sets mutable form-urlencoded input to a value at the given `[URLEncodedFormEncodedSubKey]` path.
@@ -164,13 +177,15 @@ final class URLEncodedFormParser {
   }
 }
 
-// MARK: Key
+// MARK: - URLEncodedFormEncodedKey
 
 /// Represents a key in a URLEncodedForm.
 private struct URLEncodedFormEncodedKey {
   let string: String
   let subKeys: [URLEncodedFormEncodedSubKey]
 }
+
+// MARK: - URLEncodedFormEncodedSubKey
 
 /// Available subkeys.
 private enum URLEncodedFormEncodedSubKey {
@@ -180,9 +195,9 @@ private enum URLEncodedFormEncodedSubKey {
 
 // MARK: Utilities
 
-private extension Data {
+extension Data {
   /// UTF8 decodes a Stirng or throws an error.
-  func utf8DecodedString() throws -> String {
+  fileprivate func utf8DecodedString() throws -> String {
     guard let string = String(data: self, encoding: .utf8) else {
       throw URLEncodedFormError(identifier: "utf8Decoding", reason: "Failed to utf8 decode string: \(self)")
     }
@@ -191,25 +206,24 @@ private extension Data {
   }
 }
 
-private extension Data {
+extension Data {
   /// Percent decodes a String or throws an error.
-  func percentDecodedString() throws -> String {
+  private func percentDecodedString() throws -> String {
     let utf8 = try utf8DecodedString()
 
     guard let decoded = utf8.replacingOccurrences(of: "+", with: " ").removingPercentEncoding else {
       throw URLEncodedFormError(
         identifier: "percentDecoding",
-        reason: "Failed to percent decode string: \(self)"
-      )
+        reason: "Failed to percent decode string: \(self)")
     }
 
     return decoded
   }
 }
 
-fileprivate extension Array {
+extension Array {
   /// Accesses an array index or returns `nil` if the array isn't long enough.
-  subscript(safe index: Int) -> Element? {
+  fileprivate subscript(safe index: Int) -> Element? {
     guard index < count else { return nil }
     return self[index]
   }

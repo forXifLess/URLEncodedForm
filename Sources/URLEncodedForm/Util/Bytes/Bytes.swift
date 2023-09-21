@@ -20,7 +20,7 @@ public typealias MutableBytesPointer = UnsafeMutablePointer<Byte>
 
 /// Implements pattern matching for `Byte` to `Byte?`.
 public func ~=(pattern: Byte, value: Byte?) -> Bool {
-  return pattern == value
+  pattern == value
 }
 
 extension Byte {

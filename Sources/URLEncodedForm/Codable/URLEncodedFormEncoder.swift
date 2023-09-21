@@ -1,5 +1,7 @@
 import Foundation
 
+// MARK: - URLEncodedFormEncoder
+
 /// Encodes `Encodable` instances to `application/x-www-form-urlencoded` data.
 ///
 ///     print(user) /// User
@@ -13,9 +15,14 @@ import Foundation
 /// See [Mozilla's](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST) docs for more information about
 /// url-encoded forms.
 public final class URLEncodedFormEncoder: DataEncoder {
+
+  // MARK: Lifecycle
+
   /// Create a new `URLEncodedFormEncoder`.
-  public init() {}
-  
+  public init() { }
+
+  // MARK: Public
+
   /// Encodes the supplied `Encodable` object to `Data`.
   ///
   ///     print(user) // User
@@ -26,7 +33,7 @@ public final class URLEncodedFormEncoder: DataEncoder {
   ///     - encodable: Generic `Encodable` object (`E`) to encode.
   /// - returns: Encoded `Data`
   /// - throws: Any error that may occur while attempting to encode the specified type.
-  public func encode<E>(_ encodable: E) throws -> Data where E: Encodable {
+  public func encode(_ encodable: some Encodable) throws -> Data {
     let context = URLEncodedFormDataContext(.dict([:]))
     let encoder = _URLEncodedFormEncoder(context: context, codingPath: [])
     try encodable.encode(to: encoder)
@@ -34,74 +41,87 @@ public final class URLEncodedFormEncoder: DataEncoder {
     guard case .dict(let dict) = context.data else {
       throw URLEncodedFormError(
         identifier: "invalidTopLevel",
-        reason: "form-urlencoded requires a top level dictionary"
-      )
+        reason: "form-urlencoded requires a top level dictionary")
     }
     return try serializer.serialize(dict)
   }
 }
 
+// MARK: - _URLEncodedFormEncoder
+
 /// MARK: Private
 
 /// Private `Encoder`.
 private final class _URLEncodedFormEncoder: Encoder {
-  /// See `Encoder`
-  var userInfo: [CodingUserInfoKey: Any] {
-    return [:]
-  }
-  
-  /// See `Encoder`
-  let codingPath: [CodingKey]
-  
-  /// The data being decoded
-  var context: URLEncodedFormDataContext
-  
+
+  // MARK: Lifecycle
+
   /// Creates a new form url-encoded encoder
   init(context: URLEncodedFormDataContext, codingPath: [CodingKey]) {
     self.context = context
     self.codingPath = codingPath
   }
-  
+
+  // MARK: Internal
+
   /// See `Encoder`
-  func container<Key>(keyedBy type: Key.Type) -> KeyedEncodingContainer<Key>
-  where Key: CodingKey
+  let codingPath: [CodingKey]
+
+  /// The data being decoded
+  var context: URLEncodedFormDataContext
+
+  /// See `Encoder`
+  var userInfo: [CodingUserInfoKey: Any] {
+    [:]
+  }
+
+  /// See `Encoder`
+  func container<Key>(keyedBy _: Key.Type) -> KeyedEncodingContainer<Key>
+    where Key: CodingKey
   {
     let container = _URLEncodedFormKeyedEncoder<Key>(context: context, codingPath: codingPath)
     return .init(container)
   }
-  
+
   /// See `Encoder`
   func unkeyedContainer() -> UnkeyedEncodingContainer {
-    return _URLEncodedFormUnkeyedEncoder(context: context, codingPath: codingPath)
+    _URLEncodedFormUnkeyedEncoder(context: context, codingPath: codingPath)
   }
-  
+
   /// See `Encoder`
   func singleValueContainer() -> SingleValueEncodingContainer {
-    return _URLEncodedFormSingleValueEncoder(context: context, codingPath: codingPath)
+    _URLEncodedFormSingleValueEncoder(context: context, codingPath: codingPath)
   }
 }
 
+// MARK: - _URLEncodedFormSingleValueEncoder
+
 /// Private `SingleValueEncodingContainer`.
 private final class _URLEncodedFormSingleValueEncoder: SingleValueEncodingContainer {
-  /// See `SingleValueEncodingContainer`
-  var codingPath: [CodingKey]
-  
-  /// The data being encoded
-  let context: URLEncodedFormDataContext
-  
+
+  // MARK: Lifecycle
+
   /// Creates a new single value encoder
   init(context: URLEncodedFormDataContext, codingPath: [CodingKey]) {
     self.context = context
     self.codingPath = codingPath
   }
-  
+
+  // MARK: Internal
+
+  /// See `SingleValueEncodingContainer`
+  var codingPath: [CodingKey]
+
+  /// The data being encoded
+  let context: URLEncodedFormDataContext
+
   /// See `SingleValueEncodingContainer`
   func encodeNil() throws {
     // skip
   }
-  
+
   /// See `SingleValueEncodingContainer`
-  func encode<T>(_ value: T) throws where T: Encodable {
+  func encode(_ value: some Encodable) throws {
     if let convertible = value as? URLEncodedFormDataConvertible {
       try context.data.set(to: convertible.convertToURLEncodedFormData(), at: codingPath)
     } else {
@@ -111,31 +131,37 @@ private final class _URLEncodedFormSingleValueEncoder: SingleValueEncodingContai
   }
 }
 
+// MARK: - _URLEncodedFormKeyedEncoder
 
 /// Private `KeyedEncodingContainerProtocol`.
 private final class _URLEncodedFormKeyedEncoder<K>: KeyedEncodingContainerProtocol where K: CodingKey {
-  /// See `KeyedEncodingContainerProtocol`
-  typealias Key = K
-  
-  /// See `KeyedEncodingContainerProtocol`
-  var codingPath: [CodingKey]
-  
-  /// The data being encoded
-  let context: URLEncodedFormDataContext
-  
+
+  // MARK: Lifecycle
+
   /// Creates a new `_URLEncodedFormKeyedEncoder`.
   init(context: URLEncodedFormDataContext, codingPath: [CodingKey]) {
     self.context = context
     self.codingPath = codingPath
   }
-  
+
+  // MARK: Internal
+
   /// See `KeyedEncodingContainerProtocol`
-  func encodeNil(forKey key: K) throws {
+  typealias Key = K
+
+  /// See `KeyedEncodingContainerProtocol`
+  var codingPath: [CodingKey]
+
+  /// The data being encoded
+  let context: URLEncodedFormDataContext
+
+  /// See `KeyedEncodingContainerProtocol`
+  func encodeNil(forKey _: K) throws {
     // skip
   }
-  
+
   /// See `KeyedEncodingContainerProtocol`
-  func encode<T>(_ value: T, forKey key: K) throws where T : Encodable {
+  func encode(_ value: some Encodable, forKey key: K) throws {
     if let convertible = value as? URLEncodedFormDataConvertible {
       try context.data.set(to: convertible.convertToURLEncodedFormData(), at: codingPath + [key])
     } else {
@@ -143,61 +169,68 @@ private final class _URLEncodedFormKeyedEncoder<K>: KeyedEncodingContainerProtoc
       try value.encode(to: encoder)
     }
   }
-  
+
   /// See `KeyedEncodingContainerProtocol`
-  func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type, forKey key: K) -> KeyedEncodingContainer<NestedKey>
-  where NestedKey: CodingKey
+  func nestedContainer<NestedKey>(keyedBy _: NestedKey.Type, forKey key: K) -> KeyedEncodingContainer<NestedKey>
+    where NestedKey: CodingKey
   {
-    return .init(_URLEncodedFormKeyedEncoder<NestedKey>(context: context, codingPath: codingPath + [key]))
+    .init(_URLEncodedFormKeyedEncoder<NestedKey>(context: context, codingPath: codingPath + [key]))
   }
-  
+
   /// See `KeyedEncodingContainerProtocol`
   func nestedUnkeyedContainer(forKey key: K) -> UnkeyedEncodingContainer {
-    return _URLEncodedFormUnkeyedEncoder(context: context, codingPath: codingPath + [key])
+    _URLEncodedFormUnkeyedEncoder(context: context, codingPath: codingPath + [key])
   }
-  
+
   /// See `KeyedEncodingContainerProtocol`
   func superEncoder() -> Encoder {
-    return _URLEncodedFormEncoder(context: context, codingPath: codingPath)
+    _URLEncodedFormEncoder(context: context, codingPath: codingPath)
   }
-  
+
   /// See `KeyedEncodingContainerProtocol`
   func superEncoder(forKey key: K) -> Encoder {
-    return _URLEncodedFormEncoder(context: context, codingPath: codingPath + [key])
+    _URLEncodedFormEncoder(context: context, codingPath: codingPath + [key])
   }
-  
+
 }
+
+// MARK: - _URLEncodedFormUnkeyedEncoder
 
 /// Private `UnkeyedEncodingContainer`.
 private final class _URLEncodedFormUnkeyedEncoder: UnkeyedEncodingContainer {
-  /// See `UnkeyedEncodingContainer`.
-  var codingPath: [CodingKey]
-  
-  /// See `UnkeyedEncodingContainer`.
-  var count: Int
-  
-  /// The data being encoded
-  let context: URLEncodedFormDataContext
-  
-  /// Converts the current count to a coding key
-  var index: CodingKey {
-    return BasicKey(count)
-  }
-  
+
+  // MARK: Lifecycle
+
   /// Creates a new `_URLEncodedFormUnkeyedEncoder`.
   init(context: URLEncodedFormDataContext, codingPath: [CodingKey]) {
     self.context = context
     self.codingPath = codingPath
-    self.count = 0
+    count = 0
   }
-  
+
+  // MARK: Internal
+
+  /// See `UnkeyedEncodingContainer`.
+  var codingPath: [CodingKey]
+
+  /// See `UnkeyedEncodingContainer`.
+  var count: Int
+
+  /// The data being encoded
+  let context: URLEncodedFormDataContext
+
+  /// Converts the current count to a coding key
+  var index: CodingKey {
+    BasicKey(count)
+  }
+
   /// See `UnkeyedEncodingContainer`.
   func encodeNil() throws {
     // skip
   }
-  
+
   /// See UnkeyedEncodingContainer.encode
-  func encode<T>(_ value: T) throws where T: Encodable {
+  func encode(_ value: some Encodable) throws {
     defer { count += 1 }
     if let convertible = value as? URLEncodedFormDataConvertible {
       try context.data.set(to: convertible.convertToURLEncodedFormData(), at: codingPath + [index])
@@ -206,21 +239,21 @@ private final class _URLEncodedFormUnkeyedEncoder: UnkeyedEncodingContainer {
       try value.encode(to: encoder)
     }
   }
-  
+
   /// See UnkeyedEncodingContainer.nestedContainer
-  func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type) -> KeyedEncodingContainer<NestedKey>
-  where NestedKey: CodingKey
+  func nestedContainer<NestedKey>(keyedBy _: NestedKey.Type) -> KeyedEncodingContainer<NestedKey>
+    where NestedKey: CodingKey
   {
     defer { count += 1 }
     return .init(_URLEncodedFormKeyedEncoder<NestedKey>(context: context, codingPath: codingPath + [index]))
   }
-  
+
   /// See UnkeyedEncodingContainer.nestedUnkeyedContainer
   func nestedUnkeyedContainer() -> UnkeyedEncodingContainer {
     defer { count += 1 }
     return _URLEncodedFormUnkeyedEncoder(context: context, codingPath: codingPath + [index])
   }
-  
+
   /// See UnkeyedEncodingContainer.superEncoder
   func superEncoder() -> Encoder {
     defer { count += 1 }

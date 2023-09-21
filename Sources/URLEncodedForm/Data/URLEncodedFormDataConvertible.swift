@@ -1,5 +1,7 @@
 import Foundation
 
+// MARK: - URLEncodedFormDataConvertible
+
 protocol URLEncodedFormDataConvertible {
 
   /// Converts self to `URLEncodedFormData`.
@@ -9,11 +11,9 @@ protocol URLEncodedFormDataConvertible {
   static func convertFromURLEncodedFormData(_ data: URLEncodedFormData) throws -> Self
 }
 
-extension String: URLEncodedFormDataConvertible {
+// MARK: - String + URLEncodedFormDataConvertible
 
-  func convertToURLEncodedFormData() throws -> URLEncodedFormData {
-    .str(self)
-  }
+extension String: URLEncodedFormDataConvertible {
 
   static func convertFromURLEncodedFormData(_ data: URLEncodedFormData) throws -> String {
     guard let string = data.string else {
@@ -21,59 +21,84 @@ extension String: URLEncodedFormDataConvertible {
     }
     return string
   }
-}
 
-extension URL: URLEncodedFormDataConvertible {
   func convertToURLEncodedFormData() throws -> URLEncodedFormData {
-    .str(self.absoluteString)
+    .str(self)
   }
 
+}
+
+// MARK: - URL + URLEncodedFormDataConvertible
+
+extension URL: URLEncodedFormDataConvertible {
   static func convertFromURLEncodedFormData(_ data: URLEncodedFormData) throws -> URL {
     guard let url = data.url else {
       throw URLEncodedFormError(identifier: "url", reason: "Could not convert to `URL`: \(data)")
     }
     return url
   }
+
+  func convertToURLEncodedFormData() throws -> URLEncodedFormData {
+    .str(absoluteString)
+  }
+
 }
 
 extension FixedWidthInteger {
-  func convertToURLEncodedFormData() throws -> URLEncodedFormData {
-    .str(description)
-  }
-
   static func convertFromURLEncodedFormData(_ data: URLEncodedFormData) throws -> Self {
     guard let fwi = data.string.flatMap(Self.init) else {
       throw URLEncodedFormError(identifier: "fwi", reason: "Could not convert to `\(Self.self)`: \(data)")
     }
     return fwi
   }
-}
 
-extension Int: URLEncodedFormDataConvertible {}
-
-extension Int8: URLEncodedFormDataConvertible {}
-
-extension Int16: URLEncodedFormDataConvertible {}
-
-extension Int32: URLEncodedFormDataConvertible {}
-
-extension Int64: URLEncodedFormDataConvertible {}
-
-extension UInt: URLEncodedFormDataConvertible {}
-
-extension UInt8: URLEncodedFormDataConvertible {}
-
-extension UInt16: URLEncodedFormDataConvertible {}
-
-extension UInt32: URLEncodedFormDataConvertible {}
-
-extension UInt64: URLEncodedFormDataConvertible {}
-
-extension BinaryFloatingPoint {
   func convertToURLEncodedFormData() throws -> URLEncodedFormData {
-    .str("\(self)")
+    .str(description)
   }
 
+}
+
+// MARK: - Int + URLEncodedFormDataConvertible
+
+extension Int: URLEncodedFormDataConvertible { }
+
+// MARK: - Int8 + URLEncodedFormDataConvertible
+
+extension Int8: URLEncodedFormDataConvertible { }
+
+// MARK: - Int16 + URLEncodedFormDataConvertible
+
+extension Int16: URLEncodedFormDataConvertible { }
+
+// MARK: - Int32 + URLEncodedFormDataConvertible
+
+extension Int32: URLEncodedFormDataConvertible { }
+
+// MARK: - Int64 + URLEncodedFormDataConvertible
+
+extension Int64: URLEncodedFormDataConvertible { }
+
+// MARK: - UInt + URLEncodedFormDataConvertible
+
+extension UInt: URLEncodedFormDataConvertible { }
+
+// MARK: - UInt8 + URLEncodedFormDataConvertible
+
+extension UInt8: URLEncodedFormDataConvertible { }
+
+// MARK: - UInt16 + URLEncodedFormDataConvertible
+
+extension UInt16: URLEncodedFormDataConvertible { }
+
+// MARK: - UInt32 + URLEncodedFormDataConvertible
+
+extension UInt32: URLEncodedFormDataConvertible { }
+
+// MARK: - UInt64 + URLEncodedFormDataConvertible
+
+extension UInt64: URLEncodedFormDataConvertible { }
+
+extension BinaryFloatingPoint {
   static func convertFromURLEncodedFormData(_ data: URLEncodedFormData) throws -> Self {
     guard let bfp = data.string.flatMap(Double.init).flatMap(Self.init) else {
       throw URLEncodedFormError(identifier: "bfp", reason: "Could not convert to `\(Self.self)`: \(data)")
@@ -81,17 +106,24 @@ extension BinaryFloatingPoint {
 
     return bfp
   }
+
+  func convertToURLEncodedFormData() throws -> URLEncodedFormData {
+    .str("\(self)")
+  }
+
 }
+
+// MARK: - Float + URLEncodedFormDataConvertible
 
 extension Float: URLEncodedFormDataConvertible { }
 
+// MARK: - Double + URLEncodedFormDataConvertible
+
 extension Double: URLEncodedFormDataConvertible { }
 
-extension Bool: URLEncodedFormDataConvertible {
+// MARK: - Bool + URLEncodedFormDataConvertible
 
-  func convertToURLEncodedFormData() throws -> URLEncodedFormData {
-    .str(description)
-  }
+extension Bool: URLEncodedFormDataConvertible {
 
   static func convertFromURLEncodedFormData(_ data: URLEncodedFormData) throws -> Bool {
     guard let bool = data.string?.bool else {
@@ -99,25 +131,33 @@ extension Bool: URLEncodedFormDataConvertible {
     }
     return bool
   }
-}
 
-extension Decimal: URLEncodedFormDataConvertible {
   func convertToURLEncodedFormData() throws -> URLEncodedFormData {
     .str(description)
   }
 
+}
+
+// MARK: - Decimal + URLEncodedFormDataConvertible
+
+extension Decimal: URLEncodedFormDataConvertible {
   static func convertFromURLEncodedFormData(_ data: URLEncodedFormData) throws -> Decimal {
     guard let string = data.string, let d = Decimal(string: string) else {
       throw URLEncodedFormError(identifier: "decimal", reason: "Could not convert to Decimal: \(data)")
     }
     return d
   }
+
+  func convertToURLEncodedFormData() throws -> URLEncodedFormData {
+    .str(description)
+  }
+
 }
 
 extension String {
   /// Converts the string to a `Bool` or returns `nil`.
   fileprivate var bool: Bool? {
-    switch self.lowercased() {
+    switch lowercased() {
     case "true", "yes", "1", "y": return true
     case "false", "no", "0", "n": return false
     default: return nil

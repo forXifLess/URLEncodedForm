@@ -1,5 +1,7 @@
 import Foundation
 
+// MARK: - DataDecoder
+
 /// A type capable of decoding `Decodable` types from `Data`.
 ///
 ///     print(data) /// Data
@@ -22,7 +24,6 @@ public protocol DataDecoder {
   func decode<D>(_ decodable: D.Type, from data: Data) throws -> D where D: Decodable
 }
 
-
 extension DataDecoder {
   /// Convenience method for decoding a `Decodable` type from something `LosslessDataConvertible`.
   ///
@@ -36,9 +37,11 @@ extension DataDecoder {
   ///     - from: `LosslessDataConvertible` to decode a `D` from.
   /// - returns: An instance of the `Decodable` type (`D`).
   /// - throws: Any error that may occur while attempting to decode the specified type.
-  public func decode<D>(_ decodable: D.Type, from data: LosslessDataConvertible) throws -> D where D: Decodable {
-    return try decode(D.self, from: data.convertToData())
+  public func decode<D>(_: D.Type, from data: LosslessDataConvertible) throws -> D where D: Decodable {
+    try decode(D.self, from: data.convertToData())
   }
 }
+
+// MARK: - JSONDecoder + DataDecoder
 
 extension JSONDecoder: DataDecoder { }

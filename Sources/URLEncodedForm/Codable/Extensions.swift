@@ -14,9 +14,8 @@ extension Encodable {
   }
 }
 
-
 extension String {
   public func decodedObject<T: Decodable>() -> T? {
-    return try? URLEncodedFormDecoder().decode(T.self, from: self)
+    try? URLEncodedFormDecoder().decode(T.self, from: self)
   }
 }

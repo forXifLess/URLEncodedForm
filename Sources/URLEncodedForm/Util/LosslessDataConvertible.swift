@@ -1,5 +1,7 @@
 import Foundation
 
+// MARK: - LosslessDataConvertible
+
 /// A type that can be represented as `Data` in a lossless, unambiguous way.
 public protocol LosslessDataConvertible {
   /// Losslessly converts this type to `Data`.
@@ -18,17 +20,14 @@ extension Data {
   /// - parameters:
   ///     - type: The `LosslessDataConvertible` to convert to.
   /// - returns: Instance of the `LosslessDataConvertible` type.
-  public func convert<T>(to type: T.Type = T.self) -> T where T: LosslessDataConvertible {
-    return T.convertFromData(self)
+  public func convert<T>(to _: T.Type = T.self) -> T where T: LosslessDataConvertible {
+    T.convertFromData(self)
   }
 }
 
-extension String: LosslessDataConvertible {
-  /// Converts this `String` to data using `.utf8`.
-  public func convertToData() -> Data {
-    return Data(utf8)
-  }
+// MARK: - String + LosslessDataConvertible
 
+extension String: LosslessDataConvertible {
   /// Converts `Data` to a `utf8` encoded String.
   ///
   /// - throws: Error if String is not UTF8 encoded.
@@ -40,20 +39,32 @@ extension String: LosslessDataConvertible {
     }
     return string
   }
+
+  /// Converts this `String` to data using `.utf8`.
+  public func convertToData() -> Data {
+    Data(utf8)
+  }
+
 }
 
-extension Array: LosslessDataConvertible where Element == UInt8 {
+// MARK: - Array + LosslessDataConvertible
+
+extension [UInt8]: LosslessDataConvertible {
+  /// Converts `Data` to `[UInt8]`.
+  public static func convertFromData(_ data: Data) -> [UInt8] { .init(data) }
+
   /// Converts this `[UInt8]` to `Data`.
   public func convertToData() -> Data { .init(self) }
 
-  /// Converts `Data` to `[UInt8]`.
-  public static func convertFromData(_ data: Data) -> Array<UInt8> { .init(data) }
 }
+
+// MARK: - Data + LosslessDataConvertible
 
 extension Data: LosslessDataConvertible {
   /// `LosslessDataConvertible` conformance.
-  public func convertToData() -> Data { self }
+  public static func convertFromData(_ data: Data) -> Data { data }
 
   /// `LosslessDataConvertible` conformance.
-  public static func convertFromData(_ data: Data) -> Data { data }
+  public func convertToData() -> Data { self }
+
 }

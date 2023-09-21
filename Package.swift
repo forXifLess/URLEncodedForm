@@ -14,6 +14,7 @@ let package = Package(
       targets: ["URLEncodedForm"]),
   ],
   dependencies: [
+    .package(url: "https://github.com/airbnb/swift", from: "1.0.5"),
   ],
   targets: [
     .target(
@@ -22,5 +23,4 @@ let package = Package(
     .testTarget(
       name: "URLEncodedFormTests",
       dependencies: ["URLEncodedForm"]),
-  ]
-)
+  ])

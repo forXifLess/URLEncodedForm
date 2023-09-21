@@ -1,5 +1,7 @@
 import Foundation
 
+// MARK: - DataEncoder
+
 /// A type capable of encoding `Encodable` objects to `Data`.
 ///
 ///     print(user) /// User
@@ -19,5 +21,7 @@ public protocol DataEncoder {
   /// - throws: Any error that may occur while attempting to encode the specified type.
   func encode<E>(_ encodable: E) throws -> Data where E: Encodable
 }
+
+// MARK: - JSONEncoder + DataEncoder
 
 extension JSONEncoder: DataEncoder { }
